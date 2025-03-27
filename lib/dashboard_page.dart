@@ -96,7 +96,6 @@ class DashboardPage extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: () {
-                            // TODO: Navigate to Transactions Page
                           },
                           child: const Text("See All"),
                         ),
