@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
+import 'signup_page.dart';
+import 'forgotpassword_page.dart';
 import 'colors.dart';
 
 class LoginPage extends StatefulWidget {
@@ -25,9 +27,12 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Bank Logo
-              const Icon(Icons.account_balance, size: 80, color: AppColors.primary),
+              Image.asset(
+                'assets/PesoWiseLogo.png',
+                height: 50,          // Adjust the height
+              ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 50),
 
               // Email Input
               TextField(
@@ -106,13 +111,20 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      // TODO: Navigate to Forgot Password Page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                      );
                     },
                     child: const Text("Forgot Password?"),
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: Navigate to Sign-up Page
+                      // Navigate to SignupPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SignupPage()),
+                      );
                     },
                     child: const Text("Sign Up"),
                   ),

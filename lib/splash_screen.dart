@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Import Login Page
+import 'welcome_page.dart'; // Import your login page
 import 'colors.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => const WelcomePage()), // Navigate to Welcome Page
       );
     });
   }
@@ -24,16 +24,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.softGray,
-      body: Center(
+      backgroundColor: AppColors.softGray // Splash screen background color
+      ,body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.account_balance, size: 100, color: AppColors.primary), // Logo
+            // Replace Icon with your custom image
+            Image.asset(
+              'assets/PesoWiseLogo.png',
+              height: 50,          // Adjust the height
+            ),
             const SizedBox(height: 20),
             const Text(
-              "PesoWise Banks",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.darkTeal),
+              "We Found Ways",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkGray,
+              ),
             ),
           ],
         ),
