@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'pin-code_page.dart'; // Import the PinCodePage
 import 'colors.dart'; // Import the colors file
+import 'AuthService.dart';
+import 'login_page.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -14,6 +18,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final _auth = AuthService();
   bool _isPasswordVisible = false;
 
   @override
@@ -127,6 +132,7 @@ class _SignupPageState extends State<SignupPage> {
                           password.isNotEmpty &&
                           confirmPassword.isNotEmpty) {
                         if (password == confirmPassword) {
+                          _signupfunc_();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -175,5 +181,23 @@ class _SignupPageState extends State<SignupPage> {
         ),
       ),
     );
+  }
+
+  _signupfunc_() async {
+    final user =
+    await _auth.createUserWithEmailAndPassword(_emailController.text, _passwordController.text);
+    if (user != null) {
+      log("User Created Successfully");
+      _savedUserData();
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
+    //...Continue here
+  }
+
+  _savedUserData () async {
+    //...Continue here
   }
 }

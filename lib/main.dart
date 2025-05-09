@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'splash_screen.dart'; // Import Splash Screen
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+Future<void> main() async {
   runApp(const BankApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 }
 
 class BankApp extends StatelessWidget {

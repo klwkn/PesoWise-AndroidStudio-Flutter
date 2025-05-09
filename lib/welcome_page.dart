@@ -38,11 +38,6 @@ class WelcomePage extends StatelessWidget {
           // Description
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 30.0),
-            // child: Text(
-            //   "Your one-stop solution for managing your finances. Get started and take control of your money!",
-            //   textAlign: TextAlign.center,
-            //   style: TextStyle(fontSize: 16, color: AppColors.darkGray),
-            // ),
           ),
           const SizedBox(height: 50),
 
