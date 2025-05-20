@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'dashboard_page.dart';
 import 'signup_page.dart';
 import 'forgotpassword_page.dart';
 import 'colors.dart';
+import 'AuthService.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,6 +20,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
+  final _auth = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,11 +32,8 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Bank Logo
-              Image.asset(
-                'assets/PesoWiseLogo.png',
-                height: 50,          // Adjust the height
-              ),
+              // Logo
+              Image.asset('assets/PesoWiseLogo.png', height: 50),
 
               const SizedBox(height: 50),
 
@@ -77,22 +80,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    String email = _emailController.text;
-                    String password = _passwordController.text;
-
-                    if (email.isNotEmpty && password.isNotEmpty) {
-                      // Navigate to Dashboard Page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => DashboardPage()),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please enter credentials!")),
-                      );
-                    }
-                  },
+                  onPressed: _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.darkTeal,
                     shape: RoundedRectangleBorder(
@@ -120,7 +108,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigate to SignupPage
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const SignupPage()),
@@ -135,5 +122,56 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogin() async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter credentials!")),
+      );
+      return;
+    }
+
+    try {
+      final user = await _auth.loginUserWithEmailAndPassword(email, password);
+
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('bank-account')
+            .doc(user.uid)
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data()!;
+          final int balance = data['balance'] ?? 0;
+          final String accountNumber = data['account-number'] ?? 'N/A';
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DashboardPage(
+                balance: balance,
+                accountNumber: accountNumber,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No bank data found.")),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login failed.")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    }
   }
 }

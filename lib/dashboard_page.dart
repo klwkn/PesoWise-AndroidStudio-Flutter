@@ -1,30 +1,81 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'welcome_page.dart';
-import 'colors.dart'; // Import the colors file
+import 'colors.dart';
+import 'transactions_page.dart';
+import 'history_page.dart';
+import 'user_settings_page.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class DashboardPage extends StatefulWidget {
+  final int balance;
+  final String accountNumber;
+
+  const DashboardPage({
+    super.key,
+    required this.balance,
+    required this.accountNumber,
+  });
+
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int _selectedIndex = 0;
+  String _userName = "User";
+
+  final List<Widget> _pages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+    _pages.add(HomePage(accountNumber: widget.accountNumber, userName: _userName));
+    _pages.add(const TransactionsPage());
+    _pages.add(const HistoryPage());
+    _pages.add(const UserSettingsPage());
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('user-data')
+            .doc(uid)
+            .get();
+
+        if (doc.exists) {
+          final name = doc.data()?['name'] ?? 'User';
+
+          setState(() {
+            _userName = name;
+            _pages[0] = HomePage(accountNumber: widget.accountNumber, userName: _userName);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading user name: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: Image.asset(
-          'assets/PesoWiseLogo.png', // Replace with your logo's path
-          height: 30, // Adjust the height as needed
-        ),
+        title: Image.asset('assets/PesoWiseLogo.png', height: 30),
         backgroundColor: AppColors.primary,
-        automaticallyImplyLeading: false, // Removes the back button
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Navigate to the Welcome Page
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const WelcomePage()),
-                    (route) => false, // Removes all previous routes
+                    (route) => false,
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Logged out successfully")),
@@ -33,135 +84,119 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Balance Section
-          Container(
-            padding: const EdgeInsets.all(20),
-            color: AppColors.lightGray,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Text(
-                  "Your Balance",
-                  style: TextStyle(color: AppColors.darkGray, fontSize: 20),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "₱50,000.00", // Static balance, can be dynamic later
-                  style: TextStyle(
-                    color: AppColors.darkGray,
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Quick Actions and Recent Transactions Section
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Quick Actions Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _quickAction(Icons.send, "Send Money"),
-                      _quickAction(Icons.account_balance, "Deposit"),
-                      _quickAction(Icons.payment, "Pay Bills"),
-                      _quickAction(Icons.history, "History"),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Recent Transactions Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Recent Transactions",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                          },
-                          child: const Text("See All"),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Transactions List
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        _transactionTile("Netflix Subscription", "-₱550.00", "March 12"),
-                        _transactionTile("Money Received", "+₱2,000.00", "March 11"),
-                        _transactionTile("Electricity Bill", "-₱1,500.00", "March 10"),
-                        _transactionTile("Groceries - SM", "-₱3,200.00", "March 9"),
-                        _transactionTile("Online Shopping (Lazada)", "-₱1,100.00", "March 8"),
-                        _transactionTile("Salary Credited", "+₱30,000.00", "March 7"),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        backgroundColor: AppColors.softGray,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.darkGray,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+        selectedFontSize: 14,
+        unselectedFontSize: 12,
+        iconSize: 30,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Transactions'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
     );
   }
+}
 
-  // Quick Action Buttons
-  Widget _quickAction(IconData icon, String label) {
-    return Column(
+class HomePage extends StatelessWidget {
+  final String accountNumber;
+  final String userName;
+
+  const HomePage({
+    super.key,
+    required this.accountNumber,
+    required this.userName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: AppColors.darkTeal,
-          child: Icon(icon, color: AppColors.softGray, size: 30),
+        // Greeting and Notification Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Hi $userName!",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const Icon(Icons.notifications, color: AppColors.primary),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: AppColors.darkGray),
-        ),
-      ],
-    );
-  }
+        const SizedBox(height: 16),
 
-  // Transaction Tile
-  Widget _transactionTile(String title, String amount, String date) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.grey[300],
-        child: const Icon(Icons.receipt_long, color: AppColors.darkGray),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(date),
-      trailing: Text(
-        amount,
-        style: TextStyle(
-          color: amount.contains('+') ? Colors.green : Colors.red,
-          fontWeight: FontWeight.bold,
+        // Real-time Balance Card
+        StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('bank-account')
+              .doc(uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final data = snapshot.data!.data() as Map<String, dynamic>?;
+            final updatedBalance = data?['balance'] ?? 0;
+
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.darkTeal,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Account number
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Account Number:", style: TextStyle(color: Colors.white)),
+                      Text(accountNumber,
+                          style: const TextStyle(color: Colors.white, fontSize: 18)),
+                    ],
+                  ),
+                  // Live Balance
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text("Available Balance:", style: TextStyle(color: Colors.white)),
+                      Text("PHP $updatedBalance",
+                          style: const TextStyle(color: Colors.white, fontSize: 18)),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         ),
-      ),
+
+        const SizedBox(height: 24),
+        const Text("Special Deals",
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkGray)),
+        const Divider(),
+        const SizedBox(height: 16),
+        const Text("Discount & Vouchers",
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkGray)),
+        const Divider(),
+      ],
     );
   }
 }

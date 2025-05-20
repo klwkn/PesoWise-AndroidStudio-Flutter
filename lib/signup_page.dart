@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'pin-code_page.dart'; // Import the PinCodePage
 import 'colors.dart'; // Import the colors file
@@ -121,23 +122,18 @@ class _SignupPageState extends State<SignupPage> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       String name = _nameController.text;
                       String email = _emailController.text;
                       String password = _passwordController.text;
                       String confirmPassword = _confirmPasswordController.text;
 
-                      if (name.isNotEmpty &&
-                          email.isNotEmpty &&
-                          password.isNotEmpty &&
-                          confirmPassword.isNotEmpty) {
+                      if (name.isNotEmpty && email.isNotEmpty && password.isNotEmpty && confirmPassword.isNotEmpty) {
                         if (password == confirmPassword) {
-                          _signupfunc_();
+                          await _signupfunc_(); // Make sure this completes before moving on
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const PinCodePage(),
-                            ),
+                            MaterialPageRoute(builder: (context) => const PinCodePage()),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -184,20 +180,48 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   _signupfunc_() async {
-    final user =
-    await _auth.createUserWithEmailAndPassword(_emailController.text, _passwordController.text);
+    final user = await _auth.createUserWithEmailAndPassword(
+      _emailController.text,
+      _passwordController.text,
+    );
+
     if (user != null) {
       log("User Created Successfully");
-      _savedUserData();
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
+      await _savedUserData(user.uid); // Await this to avoid async race
+      // DO NOT navigate here anymore
     }
-    //...Continue here
   }
 
-  _savedUserData () async {
-    //...Continue here
+  _savedUserData(String userid) async {
+    final users = FirebaseFirestore.instance;
+    final bankAccounts = FirebaseFirestore.instance;
+
+    final existingUser = await users
+        .collection('users-data')
+        .where('email', isEqualTo: _emailController.text)
+        .limit(1)
+        .get();
+
+    if (existingUser.docs.isEmpty) {
+      // 🔢 Generate unique account number
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final uniqueNumber = timestamp.toString().substring(timestamp.toString().length - 6);
+      final accountNumber = "5-$uniqueNumber";
+
+      await users.collection('user-data').doc(userid).set({
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'pass': _passwordController.text,
+      });
+
+      await bankAccounts.collection('bank-account').doc(userid).set({
+        'account-number': accountNumber,
+        'balance': 0,
+      });
+
+      print('User added.');
+    } else {
+      print('User with this email already exists.');
+    }
   }
 }

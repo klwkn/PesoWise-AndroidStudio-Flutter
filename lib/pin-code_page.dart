@@ -31,16 +31,14 @@ class _PinCodePageState extends State<PinCodePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //Mail Sent Logo
+              // Mail Sent Logo
               Icon(
                 Icons.alternate_email_rounded,
                 color: AppColors.darkTeal,
                 size: 100,
-              )
-
-              ,const SizedBox(height: 50)
-
-              ,const Text(
+              ),
+              const SizedBox(height: 50),
+              const Text(
                 "Please enter the 6-digit PIN code sent to your email.",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, color: AppColors.darkGray),
@@ -70,9 +68,18 @@ class _PinCodePageState extends State<PinCodePage> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_pinController.text.length == 6) {
+                      // Assuming you have the balance and account number available
+                      int balance = 50000; // Replace with actual balance
+                      String accountNumber = '5 - 1324'; // Replace with actual account number
+
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const DashboardPage()),
+                        MaterialPageRoute(
+                          builder: (context) => DashboardPage(
+                            balance: balance,
+                            accountNumber: accountNumber,
+                          ),
+                        ),
                             (route) => false, // Removes all previous routes
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
