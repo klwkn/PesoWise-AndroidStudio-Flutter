@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'welcome_page.dart';
 import 'colors.dart';
 import 'transactions_page.dart';
 import 'history_page.dart';
 import 'user_settings_page.dart';
+import 'Analytics.dart';
 
 class DashboardPage extends StatefulWidget {
   final int balance;
@@ -34,6 +36,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _pages.add(HomePage(accountNumber: widget.accountNumber, userName: _userName));
     _pages.add(const TransactionsPage());
     _pages.add(const HistoryPage());
+    _pages.add(RealTimeVerticalBarChart());
     _pages.add(const UserSettingsPage());
   }
 
@@ -104,6 +107,7 @@ class _DashboardPageState extends State<DashboardPage> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Transactions'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Analytics'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
@@ -111,7 +115,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final String accountNumber;
   final String userName;
 
@@ -120,6 +124,19 @@ class HomePage extends StatelessWidget {
     required this.accountNumber,
     required this.userName,
   });
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final List<String> imagePaths = [
+    'assets/imagecarousel1.jpg',
+    'assets/imagecarousel1.avif',
+    'assets/imagecarousel2.jpg',
+  ];
+
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +150,7 @@ class HomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Hi $userName!",
+              "Hi ${widget.userName}!",
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const Icon(Icons.notifications, color: AppColors.primary),
@@ -169,7 +186,7 @@ class HomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text("Account Number:", style: TextStyle(color: Colors.white)),
-                      Text(accountNumber,
+                      Text(widget.accountNumber,
                           style: const TextStyle(color: Colors.white, fontSize: 18)),
                     ],
                   ),
@@ -189,10 +206,38 @@ class HomePage extends StatelessWidget {
         ),
 
         const SizedBox(height: 24),
+
+        // Special Deals Section
         const Text("Special Deals",
             style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkGray)),
         const Divider(),
+        const SizedBox(height: 12),
+
+        CarouselSlider(
+          items: imagePaths.map((path) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                path,
+                fit: BoxFit.cover,
+                width: double.infinity,
+              ),
+            );
+          }).toList(),
+          options: CarouselOptions(
+            height: 180,
+            autoPlay: true,
+            enlargeCenterPage: true,
+            onPageChanged: (index, reason) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+          ),
+        ),
         const SizedBox(height: 16),
+
+        // Discount Section
         const Text("Discount & Vouchers",
             style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkGray)),
         const Divider(),
